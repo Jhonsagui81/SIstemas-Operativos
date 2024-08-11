@@ -1,0 +1,1 @@
+savedcmd_/home/jhonatan/Documentos/1_USAC/8Semestre/1.sopes1/Lab/Tarea1/prueba1/basic.mod := printf '%s\n'   basic.o | awk '!x[$$0]++ { print("/home/jhonatan/Documentos/1_USAC/8Semestre/1.sopes1/Lab/Tarea1/prueba1/"$$0) }' > /home/jhonatan/Documentos/1_USAC/8Semestre/1.sopes1/Lab/Tarea1/prueba1/basic.mod

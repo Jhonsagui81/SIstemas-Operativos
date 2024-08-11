@@ -1,0 +1,1 @@
+savedcmd_/home/jhonatan/Documentos/1_USAC/8Semestre/1.sopes1/Lab/Tarea1/prueba2/Module.symvers :=  scripts/mod/modpost -m -a      -o /home/jhonatan/Documentos/1_USAC/8Semestre/1.sopes1/Lab/Tarea1/prueba2/Module.symvers -T /home/jhonatan/Documentos/1_USAC/8Semestre/1.sopes1/Lab/Tarea1/prueba2/modules.order -i Module.symvers -e 
