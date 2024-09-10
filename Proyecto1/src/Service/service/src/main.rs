@@ -1,7 +1,15 @@
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::Path;
+use std::process::Command;
+use std::env;
+use once_cell::sync::Lazy;
+use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
+use ctrlc;
+
+//Creacion de variable global para almacenar id de contenedor de logs
+static LOG_CONTAINER_ID: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
 
 // CREACIÓN DE STRUCT
 
@@ -14,6 +22,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct SystemInfo {
+    #[serde(rename = "TotalRAM")]
+    total_ram: u64,
+    #[serde(rename = "FreeRAM")]
+    free_ram: u64,
+    #[serde(rename = "UsedRAM")]
+    used_ram: u64,
     #[serde(rename = "Processes")]
     processes: Vec<Process>
 }
@@ -40,6 +54,10 @@ struct Process {
     name: String,
     #[serde(rename = "Cmdline")]
     cmd_line: String,
+    #[serde(rename = "Vsz")]
+    vsz: f64,
+    #[serde(rename = "Rss")]
+    rss: f64,
     #[serde(rename = "MemoryUsage")]
     memory_usage: f64,
     #[serde(rename = "CPUUsage")]
@@ -115,13 +133,26 @@ impl Eq for Process {}
 
     TODO? :Se pueden agregar más condiciones para comparar en base a otros campos si es necesario.
 */
+// impl Ord for Process {
+//     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+//         self.cpu_usage.partial_cmp(&other.cpu_usage).unwrap_or(std::cmp::Ordering::Equal)
+//             .then_with(|| self.memory_usage.partial_cmp(&other.memory_usage).unwrap_or(std::cmp::Ordering::Equal))
+//     }
+// }
+
+
 impl Ord for Process {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.cpu_usage.partial_cmp(&other.cpu_usage).unwrap_or(std::cmp::Ordering::Equal)
-            .then_with(|| self.memory_usage.partial_cmp(&other.memory_usage).unwrap_or(std::cmp::Ordering::Equal))
+        self.cpu_usage.partial_cmp(&other.cpu_usage)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| self.memory_usage.partial_cmp(&other.memory_usage)
+                             .unwrap_or(std::cmp::Ordering::Equal))
+            .then_with(|| self.vsz.partial_cmp(&other.vsz)
+                             .unwrap_or(std::cmp::Ordering::Equal))
+            .then_with(|| self.rss.partial_cmp(&other.rss)
+                             .unwrap_or(std::cmp::Ordering::Equal))
     }
 }
-
 /* 
     PartialOrd Trait:
 
@@ -164,7 +195,11 @@ fn kill_container(id: &str) -> std::process::Output {
 }
 
 fn analyzer( system_info:  SystemInfo) {
-
+    let id_log = LOG_CONTAINER_ID.lock().unwrap().clone();
+    let _id_contenedor_logs = match id_log {
+        Some(id) => id,
+        None => "No encontrado".to_string(),
+    };
 
     // Creamos un vector vacío para guardar los logs de los procesos.
     let mut log_proc_list: Vec<LogProcess> = Vec::new();
@@ -178,6 +213,11 @@ fn analyzer( system_info:  SystemInfo) {
     let mut processes_list: Vec<Process> = system_info.processes;
 
 
+    processes_list.retain(|process| {
+        // Truncar el ID largo del contenedor en el JSON para que coincida con el ID corto
+        let truncated_id = &process.get_container_id[.._id_contenedor_logs.len()];
+        truncated_id != _id_contenedor_logs
+    });
     /* 
         Cuando llamas a la función sort en un vector de Process, se ejecutarán los traits 
         Ord y PartialOrd en el siguiente orden y con la siguiente funcionalidad:
@@ -203,20 +243,22 @@ fn analyzer( system_info:  SystemInfo) {
 
 
     // Dividimos la lista de procesos en dos partes iguales.
-    let (lowest_list, highest_list) = processes_list.split_at(processes_list.len() / 2);
+    let len = processes_list.len();
+    let split_index = (len + 1) / 2; 
+    let (lowest_list, highest_list) = processes_list.split_at(split_index);
 
 
     // Hacemos un print de los contenedores de bajo consumo en las listas.
     println!("Bajo consumo");
     for process in lowest_list {
-        println!("PID: {}, Name: {}, container ID: {}, Memory Usage: {}, CPU Usage: {}", process.pid, process.name, process.get_container_id(), process.memory_usage, process.cpu_usage);
+        println!("PID: {}, Name: {}, container ID: {}, Vsz: {},Rss: {}, Memory Usage: {}, CPU Usage: {}", process.pid, process.name, process.get_container_id(), process.vsz, process.rss, process.memory_usage, process.cpu_usage);
     }
 
     println!("------------------------------");
 
     println!("Alto consumo");
     for process in highest_list {
-        println!("PID: {}, Name: {}, Icontainer ID {}, Memory Usage: {}, CPU Usage: {}", process.pid, process.name,process.get_container_id(),process.memory_usage, process.cpu_usage);
+        println!("PID: {}, Name: {}, container ID: {}, Vsz: {},Rss: {}, Memory Usage: {}, CPU Usage: {}", process.pid, process.name, process.get_container_id(), process.vsz, process.rss, process.memory_usage, process.cpu_usage);
     }
 
     println!("------------------------------");
@@ -329,16 +371,78 @@ fn parse_proc_to_struct(json_str: &str) -> Result<SystemInfo, serde_json::Error>
     Ok(system_info)
 }
 
+fn start_log_container() -> Result<(), Box<dyn std::error::Error>> {
+    // Ruta al directorio donde se encuentra el docker-compose.yml
+    let python_service_dir = Path::new("../../../python_service");
 
+    // Cambia el directorio de trabajo al de python_service
+    env::set_current_dir(&python_service_dir)?;
+
+    // Ejecuta docker-compose up en el directorio python_service
+    let output = Command::new("docker-compose")
+        .arg("up")
+        .arg("-d")  // Modo detach para que se ejecute en segundo plano
+        .output()?;
+
+    if !output.status.success() {
+        eprintln!("Error al levantar el contenedor de logs: {:?}", output);
+        return Err("Error al iniciar el contenedor de logs".into());
+    }
+
+    println!("Contenedor de logs levantado");
+
+    // Obtén el ID del contenedor de logs
+    let container_id = get_log_container_id()?;
+
+    *LOG_CONTAINER_ID.lock().unwrap() = Some(container_id);
+    Ok(())
+}
+
+fn get_log_container_id() -> Result<String, Box<dyn std::error::Error>> {
+    // Ejecuta docker ps para obtener el ID del contenedor de logs
+    let output = Command::new("docker")
+        .arg("ps")
+        .arg("--filter")
+        .arg("name=python_container")  // Nombre del contenedor del gestor de logs
+        .arg("--format")
+        .arg("{{.ID}}")  // Solo obtenemos el ID del contenedor
+        .output()?;
+      // Capturamos la salida estándar y de error
+      let stdout = std::str::from_utf8(&output.stdout)?;
+      let _stderr = std::str::from_utf8(&output.stderr)?;
+    if !output.status.success() {
+        eprintln!("Error al obtener el ID del contenedor de logs: {:?}", output);
+        return Err("Error al obtener el ID del contenedor de logs".into());
+    }
+
+    println!("Salida estándar de docker-compose:{}", stdout);
+    println!("Contenedor de logs levantado");
+
+    let container_id = String::from_utf8(output.stdout)?;
+    Ok(container_id.trim().to_string())  // Devuelve el ID del contenedor sin espacios
+}
 
 fn main() {
 
     // TODO: antes de iniciar el loop, ejecutar el docker-compose.yml y obtener el id del contenedor registro.
+    // Ejecutar el comando docker-compose up
+     // Ruta relativa al archivo docker-compose.yml desde tu archivo main.rs
+    let _conteiner_id = start_log_container();
+    
 
     // TODO: Utilizar algo para capturar la señal de terminación y matar el contenedor registro y cronjob.
+    // Registrar un manejador para la señal Ctrl+C
+    ctrlc::set_handler(move || {
+        println!("Ctrl-C pressed. Exiting...");
+        println!("colocar el codigo para detener el cronjob");
+        // Aquí puedes agregar tu código para detener otros procesos, como el contenedor registro y cronjob
+        // Por ejemplo, podrías usar la biblioteca `docker` para interactuar con Docker
+        // ... (tu código para detener los contenedores)
+
+        std::process::exit(0);
+    }).expect("Error setting Ctrl-C handler");
 
     loop {
-        
         // Creamos una estructura de datos SystemInfo con un vector de procesos vacío.
         let system_info: Result<SystemInfo, _>;
 
