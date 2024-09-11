@@ -5,7 +5,10 @@ use std::process::Command;
 use std::env;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
+use reqwest::blocking::Client;
+use serde_json;
 use serde::{Deserialize, Serialize};
+use chrono::{DateTime, Local};
 use ctrlc;
 
 //Creacion de variable global para almacenar id de contenedor de logs
@@ -64,15 +67,26 @@ struct Process {
     cpu_usage: f64,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize,Deserialize, Clone)]
 struct LogProcess {
     pid: u32,
     container_id: String,
     name: String,
+    vsz: f64,
+    rss: f64,
     memory_usage: f64,
     cpu_usage: f64,
+    action: String,
+    timestamp: String
 }
 
+#[derive(Debug, Serialize,Deserialize, Clone)]
+struct LogMemory {
+    total_ram: u64,
+    free_ram: u64,
+    used_ram: u64,
+    timestamp: String
+}
 // IMPLEMENTACIÓN DE MÉTODOS
 
 /* 
@@ -194,12 +208,32 @@ fn kill_container(id: &str) -> std::process::Output {
     output
 }
 
+fn obtener_fecha_hora() -> String {
+    let ahora: DateTime<Local> = Local::now();
+    ahora.format("%d/%m/%Y %H:%M:%S").to_string()
+}
+
 fn analyzer( system_info:  SystemInfo) {
     let id_log = LOG_CONTAINER_ID.lock().unwrap().clone();
     let _id_contenedor_logs = match id_log {
         Some(id) => id,
         None => "No encontrado".to_string(),
     };
+
+    let mut log_memory_list: Vec<LogMemory> = Vec::new();
+    let log_memory: LogMemory = LogMemory {
+        total_ram: system_info.total_ram,
+        free_ram: system_info.free_ram,
+        used_ram: system_info.used_ram,
+        timestamp: obtener_fecha_hora(),
+    }; 
+    log_memory_list.push(log_memory);
+
+    println!("Memoria");
+    println!("Total RAM: {}", system_info.total_ram);
+    println!("Free RAM: {}", system_info.free_ram);
+    println!("Used RAM: {}", system_info.used_ram);
+    println!("------------------------------\n");
 
     // Creamos un vector vacío para guardar los logs de los procesos.
     let mut log_proc_list: Vec<LogProcess> = Vec::new();
@@ -215,7 +249,7 @@ fn analyzer( system_info:  SystemInfo) {
 
     processes_list.retain(|process| {
         // Truncar el ID largo del contenedor en el JSON para que coincida con el ID corto
-        let truncated_id = &process.get_container_id[.._id_contenedor_logs.len()];
+        let truncated_id = &process.get_container_id()[.._id_contenedor_logs.len()];
         truncated_id != _id_contenedor_logs
     });
     /* 
@@ -254,14 +288,14 @@ fn analyzer( system_info:  SystemInfo) {
         println!("PID: {}, Name: {}, container ID: {}, Vsz: {},Rss: {}, Memory Usage: {}, CPU Usage: {}", process.pid, process.name, process.get_container_id(), process.vsz, process.rss, process.memory_usage, process.cpu_usage);
     }
 
-    println!("------------------------------");
+    println!("------------------------------\n");
 
     println!("Alto consumo");
     for process in highest_list {
         println!("PID: {}, Name: {}, container ID: {}, Vsz: {},Rss: {}, Memory Usage: {}, CPU Usage: {}", process.pid, process.name, process.get_container_id(), process.vsz, process.rss, process.memory_usage, process.cpu_usage);
     }
 
-    println!("------------------------------");
+    println!("------------------------------\n");
 
     /* 
         En la lista de bajo consumo, matamos todos los contenedores excepto los 3 primeros.
@@ -279,8 +313,12 @@ fn analyzer( system_info:  SystemInfo) {
                 pid: process.pid,
                 container_id: process.get_container_id().to_string(),
                 name: process.name.clone(),
+                vsz: process.vsz,
+                rss: process.rss,
                 memory_usage: process.memory_usage,
                 cpu_usage: process.cpu_usage,
+                action: "stop low".to_string(),
+                timestamp: obtener_fecha_hora()
             };
     
             log_proc_list.push(log_process.clone());
@@ -306,8 +344,12 @@ fn analyzer( system_info:  SystemInfo) {
                 pid: process.pid,
                 container_id: process.get_container_id().to_string(),
                 name: process.name.clone(),
+                vsz: process.vsz,
+                rss: process.rss,
                 memory_usage: process.memory_usage,
-                cpu_usage: process.cpu_usage
+                cpu_usage: process.cpu_usage,
+                action: "stop high".to_string(),
+                timestamp: obtener_fecha_hora()
             };
     
             log_proc_list.push(log_process.clone());
@@ -320,13 +362,38 @@ fn analyzer( system_info:  SystemInfo) {
 
     // TODO: ENVIAR LOGS AL CONTENEDOR REGISTRO
 
+
+    //LOGS DE PROCESO
+    let client = Client::new();
+    let res = client
+        .post("http://localhost:8000/logs") // Replace with your endpoint URL
+        .json(&log_proc_list)
+        .send()
+        .unwrap();
+
+    // Handle the response
+    let response_text = res.text().unwrap();
+    // println!("Response from Python: {}", response_text);
+
+    
+    //LOGS DE MEMORIA
+    let client = Client::new();
+    let res = client
+        .post("http://localhost:8000/logsmemory") // Replace with your endpoint URL
+        .json(&log_memory_list)
+        .send()
+        .unwrap();
+
+    // Handle the response
+    let response_text = res.text().unwrap();
+
     // Hacemos un print de los contenedores que matamos.
     println!("Contenedores matados");
     for process in log_proc_list {
         println!("PID: {}, Name: {}, Container ID: {}, Memory Usage: {}, CPU Usage: {} ", process.pid, process.name, process.container_id,  process.memory_usage, process.cpu_usage);
     }
 
-    println!("------------------------------");
+    println!("------------------------------\n\n");
 
     
 }
@@ -422,8 +489,38 @@ fn get_log_container_id() -> Result<String, Box<dyn std::error::Error>> {
     Ok(container_id.trim().to_string())  // Devuelve el ID del contenedor sin espacios
 }
 
+fn crear_cronjob() {
+    let output = Command::new("sh")
+        .arg("-c")
+        .arg("echo '* * * * * /home/jhonatan/Documentos/1_USAC/8Semestre/1.sopes1/Lab/Proyecto1/src/Script/conteiners.sh'  | crontab -")
+        .output()
+        .expect("Failed to create cronjob");
+
+    if output.status.success() {
+        println!("Cronjob creado exitosamente.");
+    } else {
+        eprintln!("Error al crear el cronjob: {:?}", output);
+    }
+}
+
+
+fn eliminar_cronjob() {
+    let output = Command::new("crontab")
+        .arg("-r")
+        .output()
+        .expect("Failed to remove cronjob");
+
+    if output.status.success() {
+        println!("Cronjob eliminado exitosamente.");
+    } else {
+        eprintln!("Error al eliminar el cronjob: {:?}", output);
+    }
+}
+
 fn main() {
 
+    //Iniciar el script para crear contenedores
+    crear_cronjob();
     // TODO: antes de iniciar el loop, ejecutar el docker-compose.yml y obtener el id del contenedor registro.
     // Ejecutar el comando docker-compose up
      // Ruta relativa al archivo docker-compose.yml desde tu archivo main.rs
@@ -434,10 +531,15 @@ fn main() {
     // Registrar un manejador para la señal Ctrl+C
     ctrlc::set_handler(move || {
         println!("Ctrl-C pressed. Exiting...");
-        println!("colocar el codigo para detener el cronjob");
-        // Aquí puedes agregar tu código para detener otros procesos, como el contenedor registro y cronjob
-        // Por ejemplo, podrías usar la biblioteca `docker` para interactuar con Docker
-        // ... (tu código para detener los contenedores)
+        eliminar_cronjob();
+        let client = Client::new();
+        let res = client
+            .get("http://localhost:8000/logs/grafica") // Replace with your endpoint URL
+            .send()
+            .unwrap();
+
+    // Handle the response
+    let response_text = res.text().unwrap();
 
         std::process::exit(0);
     }).expect("Error setting Ctrl-C handler");
