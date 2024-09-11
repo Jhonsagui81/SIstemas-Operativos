@@ -1,0 +1,11 @@
+/home/jhonatan/Documentos/1_USAC/8Semestre/1.sopes1/Lab/Proyecto1/src/Service/service/target/debug/deps/libctrlc-c8d72c13f5eaf6d5.rmeta: /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/lib.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/error.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/platform/mod.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/platform/unix/mod.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/signal.rs
+
+/home/jhonatan/Documentos/1_USAC/8Semestre/1.sopes1/Lab/Proyecto1/src/Service/service/target/debug/deps/libctrlc-c8d72c13f5eaf6d5.rlib: /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/lib.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/error.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/platform/mod.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/platform/unix/mod.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/signal.rs
+
+/home/jhonatan/Documentos/1_USAC/8Semestre/1.sopes1/Lab/Proyecto1/src/Service/service/target/debug/deps/ctrlc-c8d72c13f5eaf6d5.d: /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/lib.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/error.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/platform/mod.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/platform/unix/mod.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/signal.rs
+
+/home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/lib.rs:
+/home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/error.rs:
+/home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/platform/mod.rs:
+/home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/platform/unix/mod.rs:
+/home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ctrlc-3.4.5/src/signal.rs:

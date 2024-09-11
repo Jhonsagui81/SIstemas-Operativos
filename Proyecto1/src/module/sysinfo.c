@@ -114,9 +114,13 @@ static int sysinfo_show(struct seq_file *m, void *v){
 
       // Obtenemos la información de memoria
     si_meminfo(&si);
-
+   
     //Inicia nuestra estructura json
     seq_printf(m, "{\n");
+    unsigned long usedram = si.totalram - si.freeram;
+    seq_printf(m, "\"TotalRAM\": %lu,\n", si.totalram * 4);
+    seq_printf(m, "\"FreeRAM\": %lu,\n", si.freeram * 4);
+    seq_printf(m, "\"UsedRAM\": %lu,\n", usedram * 4);
     seq_printf(m, "\"Processes\": [\n");
 
 
@@ -157,12 +161,8 @@ static int sysinfo_show(struct seq_file *m, void *v){
             }
 
             //para memoria ram en uso 
-            unsigned long usedram = si.totalram - si.freeram;
-
+           
             seq_printf(m, "  {\n");
-            seq_printf(m, "    \"TotalRAM\": %lu,\n", si.totalram * 4);
-            seq_printf(m, "    \"FreeRAM\": %lu,\n", si.freeram * 4);
-            seq_printf(m, "    \"UsedRAM\": %lu,\n", usedram * 4);
             seq_printf(m, "    \"PID\": %d,\n", task->pid);
             seq_printf(m, "    \"Name\": \"%s\",\n", task->comm);
             seq_printf(m, "    \"Cmdline\": \"%s\",\n", cmdline ? cmdline : "N/A");

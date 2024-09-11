@@ -1,0 +1,10 @@
+/home/jhonatan/Documentos/1_USAC/8Semestre/1.sopes1/Lab/Proyecto1/src/Service/service/target/debug/deps/libfutures_task-1b69548c9a47e1ff.rmeta: /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/lib.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/spawn.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/future_obj.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/noop_waker.rs
+
+/home/jhonatan/Documentos/1_USAC/8Semestre/1.sopes1/Lab/Proyecto1/src/Service/service/target/debug/deps/libfutures_task-1b69548c9a47e1ff.rlib: /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/lib.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/spawn.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/future_obj.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/noop_waker.rs
+
+/home/jhonatan/Documentos/1_USAC/8Semestre/1.sopes1/Lab/Proyecto1/src/Service/service/target/debug/deps/futures_task-1b69548c9a47e1ff.d: /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/lib.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/spawn.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/future_obj.rs /home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/noop_waker.rs
+
+/home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/lib.rs:
+/home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/spawn.rs:
+/home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/future_obj.rs:
+/home/jhonatan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-task-0.3.30/src/noop_waker.rs:
