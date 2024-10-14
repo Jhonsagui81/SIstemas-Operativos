@@ -1,7 +1,7 @@
 syntax = "proto3"; // Indica que usamos la versión 3 de Protocol Buffers
-package disciplinas; // Define el espacio de nombres para los mensajes y servicios
+package student; // Define el espacio de nombres para los mensajes y servicios
 
-option go_package = "github.com/tomiok/grpc-test-wishlist/proto";
+option go_package = "agronomia/proto;student";
 
 service StudentService { // Define un servicio llamado StudentService
   rpc SendStudent (Student) returns (Status) {} // Define un método RPC llamado SendStudent
