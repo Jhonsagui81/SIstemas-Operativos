@@ -1,0 +1,1 @@
+/home/jhonatan/Documentos/1_USAC/8Semestre/1.sopes1/Lab/Proyecto2/Facultades/ingenieria/target/debug/ingenieria: /home/jhonatan/Documentos/1_USAC/8Semestre/1.sopes1/Lab/Proyecto2/Facultades/ingenieria/src/main.rs
