@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-losers-consumer
+  namespace: p2-so1-2024
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-losers-consumer
+  template:
+    metadata:
+      labels:
+        app: kafka-losers-consumer
+    spec:
+      containers:
+      - name: kafka-losers-consumer
+        image: jhonsagui81/losers:v4
+        ports:
+        - containerPort: 9092
+        env:
+        - name: KAFKA_BROKER
+          value: "my-cluster-kafka-bootstrap:9092" # Dirección de Kafka
+        - name: REDIS_ADDR
+          value: "redis-master:6379" # Dirección de Redis

@@ -1,0 +1,58 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grpc-client-go
+  namespace: p2-so1-2024
+spec:
+  selector:
+    matchLabels:
+      app: grpc-client-go
+  template:
+    metadata:
+      labels:
+        app: grpc-client-go
+    spec:
+      containers:
+      - name: grpc-client-go
+        image: jhonsagui81/agronomia:v4.1
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "0.3"
+        ports:
+        - containerPort: 8080
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agronomia-hpa
+  namespace: p2-so1-2024
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: grpc-client-go
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 35
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-client-service #DNS
+  namespace: p2-so1-2024
+spec:
+  selector:
+    app: grpc-client-go
+  ports:
+    - protocol: TCP
+      port: 8080 # Entrada
+      targetPort: 8080 # Salida
+  type: ClusterIP

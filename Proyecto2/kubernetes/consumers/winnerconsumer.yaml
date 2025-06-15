@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-winner-consumer
+  namespace: p2-so1-2024
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-winner-consumer
+  template:
+    metadata:
+      labels:
+        app: kafka-winner-consumer
+    spec:
+      containers:
+      - name: kafka-winner-consumer
+        image: jhonsagui81/winner:v4
+        ports:
+        - containerPort: 9092
+        env:
+        - name: KAFKA_BROKER
+          value: "my-cluster-kafka-bootstrap:9092" # Dirección de Kafka
+        - name: REDIS_ADDR
+          value: "redis-master:6379" # Dirección de Redis

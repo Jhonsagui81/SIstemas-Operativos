@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grpc-client-rust
+  namespace: p2-so1-2024
+spec:
+  selector:
+    matchLabels:
+      app: grpc-client-rust
+  template:
+    metadata:
+      labels:
+        app: grpc-client-rust
+    spec:
+      containers:
+      - name: grpc-client-rust
+        image: jhonsagui81/ingenieria:v4.1
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "0.3"
+        ports:
+        - containerPort: 8081
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ingenieria-hpa
+  namespace: p2-so1-2024
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: grpc-client-rust
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 35
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-client-service
+  namespace: p2-so1-2024
+spec:
+  selector:
+    app: grpc-client-rust
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+  type: ClusterIP
